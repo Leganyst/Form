@@ -2,8 +2,7 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from app.core.database import engine, Base
-from app.models import users
-# from app.routers import user
+from app.models import user, lead, collector, notification, user_notification_status
 
 
 
