@@ -88,4 +88,12 @@ async def verification_user(token_is_valid: bool = Depends(check_valid_token), t
     
     user = await get_user_by_vk_id(session, user_id) 
     if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")   
+        return None
+
+    return user
+
+async def get_user_depend(user: dict = Depends(verification_user)):
+    """
+    Зависимость для получения пользователя
+    """
+    return user
