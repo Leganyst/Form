@@ -13,12 +13,12 @@ from app.core.database import get_db
 router = APIRouter()
 
 # Create User
-@router.post("/users", response_model=UserRead, status_code=status.HTTP_201_CREATED, tags=["test"])
+@router.post("/users", response_model=UserRead, status_code=status.HTTP_201_CREATED, tags=["user"])
 async def create_user_endpoint(user_data: UserCreate, db: AsyncSession = Depends(get_db)):
     return await create_user(db, user_data)
 
 # Get User by ID
-@router.get("/users/{user_id}", response_model=UserRead, tags=["test"])
+@router.get("/users/{user_id}", response_model=UserRead, tags=["user"])
 async def get_user_by_id_endpoint(user_id: int, db: AsyncSession = Depends(get_db)):
     user = await get_user_by_id(db, user_id)
     if not user:
@@ -26,7 +26,7 @@ async def get_user_by_id_endpoint(user_id: int, db: AsyncSession = Depends(get_d
     return user
 
 # Get User by VK ID
-@router.get("/users/vk/{vk_id}", response_model=UserRead, tags=["test"])
+@router.get("/users/vk/{vk_id}", response_model=UserRead, tags=["user"])
 async def get_user_by_vk_id_endpoint(vk_id: str, db: AsyncSession = Depends(get_db)):
     user = await get_user_by_vk_id(db, vk_id)
     if not user:
@@ -34,7 +34,7 @@ async def get_user_by_vk_id_endpoint(vk_id: str, db: AsyncSession = Depends(get_
     return user
 
 # Update User
-@router.put("/users/{user_id}", response_model=UserRead, tags=["test"])
+@router.put("/users/{user_id}", response_model=UserRead, tags=["user"])
 async def update_user_endpoint(user_id: int, user_data: UserCreate, db: AsyncSession = Depends(get_db)):
     user = await update_user(db, user_id, user_data)
     if not user:

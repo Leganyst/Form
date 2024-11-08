@@ -13,7 +13,7 @@ from app.routers.dependencies.auth import get_user_depend
 router = APIRouter()
 
 # Create a collector
-@router.post("/collectors", response_model=CollectorRead, status_code=status.HTTP_201_CREATED)
+@router.post("/collectors", response_model=CollectorRead, status_code=status.HTTP_201_CREATED, tags=["collector"])
 async def create_collector_endpoint(
     collector_data: CollectorCreate,
     db: AsyncSession = Depends(get_db),
@@ -24,7 +24,7 @@ async def create_collector_endpoint(
     return await create_collector(db, user["id"], collector_data)
 
 # Get collectors for the authenticated user
-@router.get("/collectors", response_model=list[CollectorRead])
+@router.get("/collectors", response_model=list[CollectorRead], tags=["collector"])
 async def get_collectors_endpoint(
     db: AsyncSession = Depends(get_db),
     user: dict = Depends(get_user_depend)
@@ -34,7 +34,7 @@ async def get_collectors_endpoint(
     return await get_collectors_by_user(db, user["id"])
 
 # Update a collector by ID
-@router.put("/collectors/{collector_id}", response_model=CollectorRead)
+@router.put("/collectors/{collector_id}", response_model=CollectorRead, tags=["collector"])
 async def update_collector_endpoint(
     collector_id: int,
     collector_data: CollectorCreate,
@@ -49,7 +49,7 @@ async def update_collector_endpoint(
     return collector
 
 # Delete a collector by ID
-@router.delete("/collectors/{collector_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/collectors/{collector_id}", status_code=status.HTTP_204_NO_CONTENT, tags=["collector"])
 async def delete_collector_endpoint(
     collector_id: int,
     db: AsyncSession = Depends(get_db),
