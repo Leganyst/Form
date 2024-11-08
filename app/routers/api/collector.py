@@ -6,7 +6,8 @@ from app.crud.notification import (
     get_notifications_for_user,
     update_notification_status
 )
-from app.schemas.notification import NotificationCreate, NotificationRead, UserNotificationStatusRead
+from app.schemas.notification import NotificationCreate, NotificationRead
+from app.schemas.user_notification_status import UserNotificationStatusRead
 from app.routers.dependencies.auth import get_user_depend
 
 router = APIRouter()
