@@ -42,7 +42,7 @@ async def update_user_endpoint(user_id: int, user_data: UserCreate, db: AsyncSes
     return user
 
 # Delete User
-@router.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT, tags=["test"])
+@router.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT, tags=["user"])
 async def delete_user_endpoint(user_id: int, db: AsyncSession = Depends(get_db)):
     success = await delete_user(db, user_id)
     if not success:
