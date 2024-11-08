@@ -6,6 +6,7 @@ from app.core.database import engine, Base
 from app.models import combined, user, lead, collector, notification, user_notification_status
 from app.routers.api.user import router as user_router
 from app.routers.api.auth import router as auth_router
+from app.routers.api.collector import router as collector_router
 
 
 
@@ -39,3 +40,4 @@ async def custom_swagger_ui_html():
 
 app.include_router(user_router, prefix="/api")
 app.include_router(auth_router, prefix="/api")
+app.include_router(collector_router, prefix="/api")
