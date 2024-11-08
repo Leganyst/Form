@@ -52,7 +52,7 @@ router = APIRouter()
         }
     }
 )
-async def auth_user(user: UserRead = Depends(get_user_depend()), session: AsyncSession = Depends(get_db)):
+async def auth_user(user: UserRead = Depends(get_user_depend), session: AsyncSession = Depends(get_db)):
     """
     Аутентифицирует пользователя на основе предоставленного токена VK.
 
