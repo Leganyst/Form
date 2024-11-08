@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
-from app.crud.collector import (
+from app.crud.notification import (
     create_notification,
     get_notifications_for_user,
     update_notification_status
