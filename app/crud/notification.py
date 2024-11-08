@@ -1,8 +1,10 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import update
-from app.models.notification import Notification, UserNotificationStatus
-from app.schemas.notification import NotificationCreate, NotificationRead, UserNotificationStatusRead
+from app.models.notification import Notification
+from app.models.user_notification_status import UserNotificationStatus
+from app.schemas.notification import NotificationCreate, NotificationRead
+from app.schemas.user_notification_status import UserNotificationStatusRead
 
 # Create notification
 async def create_notification(db: AsyncSession, notification_data: NotificationCreate) -> NotificationRead:
