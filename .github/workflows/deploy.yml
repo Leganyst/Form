@@ -19,10 +19,16 @@ jobs:
         SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
         SSH_KEY: ${{ secrets.SSH_KEY }}
       run: |
-        ssh -o StrictHostKeyChecking=no -i $SSH_KEY $SSH_USERNAME@$SSH_HOST << 'EOF'
+        echo "$SSH_KEY" > ssh_key
+        chmod 600 ssh_key
+        ssh -o StrictHostKeyChecking=no -i ssh_key $SSH_USERNAME@$SSH_HOST << 'EOF'
           cd ~/Form/
           git pull origin main  # Получаем последние изменения из репозитория
           docker-compose down # Останавливаем контейнеры
-          docker-image prune -f # Удаляем старые образы
+          docker image prune -f # Удаляем старые образы
           docker-compose up -d --build   # Перезапускаем контейнеры с новыми изменениями
         EOF
+      # Cleanup step to remove the temporary ssh_key file
+    - name: Cleanup
+      run: |
+        rm -f ssh_key
