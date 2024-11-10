@@ -1,0 +1,28 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Deploy to server
+      env:
+        SSH_HOST: ${{ secrets.SSH_HOST }}
+        SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
+        SSH_KEY: ${{ secrets.SSH_KEY }}
+      run: |
+        ssh -o StrictHostKeyChecking=no -i $SSH_KEY $SSH_USERNAME@$SSH_HOST << 'EOF'
+          cd ~/Form/
+          git pull origin main  # Получаем последние изменения из репозитория
+          docker-compose down # Останавливаем контейнеры
+          docker-image prune -f # Удаляем старые образы
+          docker-compose up -d --build   # Перезапускаем контейнеры с новыми изменениями
+        EOF
