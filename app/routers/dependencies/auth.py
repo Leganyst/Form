@@ -92,6 +92,7 @@ async def verification_user(token_is_valid: bool = Depends(check_valid_token), t
 
     return user
 
+
 async def get_user_depend(user: dict = Depends(verification_user)):
     """
     Зависимость для получения пользователя

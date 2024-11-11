@@ -10,6 +10,7 @@ from app.crud.collector import (
 )
 from app.schemas.collector import CollectorCreate, CollectorRead
 from app.routers.dependencies.auth import get_user_depend
+from app.schemas.user import UserRead
 
 router = APIRouter()
 
@@ -43,7 +44,7 @@ router = APIRouter()
 async def create_collector_endpoint(
     collector_data: CollectorCreate,
     db: AsyncSession = Depends(get_db),
-    user: dict = Depends(get_user_depend)
+    user: UserRead = Depends(get_user_depend)
 ):
     """
     Создает нового сборщика для авторизованного пользователя.
@@ -53,7 +54,7 @@ async def create_collector_endpoint(
     """
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
-    return await create_collector(db, user["id"], collector_data)
+    return await create_collector(db, user.id, collector_data)
 
 
 # Get collectors for the authenticated user
@@ -84,7 +85,7 @@ async def create_collector_endpoint(
 )
 async def get_collectors_endpoint(
     db: AsyncSession = Depends(get_db),
-    user: dict = Depends(get_user_depend)
+    user: UserRead = Depends(get_user_depend)
 ):
     """
     Возвращает список сборщиков, принадлежащих текущему пользователю.
@@ -93,7 +94,7 @@ async def get_collectors_endpoint(
     """
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
-    return await get_collectors_by_user(db, user["id"])
+    return await get_collectors_by_user(db, user.id)
 
 
 # Update a collector by ID
@@ -134,7 +135,7 @@ async def update_collector_endpoint(
     collector_id: int,
     collector_data: CollectorCreate,
     db: AsyncSession = Depends(get_db),
-    user: dict = Depends(get_user_depend)
+    user: UserRead = Depends(get_user_depend)
 ):
     """
     Обновляет данные сборщика, принадлежащего текущему пользователю.
@@ -182,7 +183,7 @@ async def update_collector_endpoint(
 async def delete_collector_endpoint(
     collector_id: int,
     db: AsyncSession = Depends(get_db),
-    user: dict = Depends(get_user_depend)
+    user: UserRead = Depends(get_user_depend)
 ):
     """
     Удаляет сборщика по его ID для текущего пользователя.

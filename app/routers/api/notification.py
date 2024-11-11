@@ -7,6 +7,7 @@ from app.crud.notification import (
     update_notification_status
 )
 from app.schemas.notification import NotificationCreate, NotificationRead
+from app.schemas.user import UserRead
 from app.schemas.user_notification_status import UserNotificationStatusRead
 from app.routers.dependencies.auth import get_user_depend
 
@@ -87,7 +88,7 @@ async def create_notification_endpoint(
 )
 async def get_notifications_for_user_endpoint(
     db: AsyncSession = Depends(get_db),
-    user: dict = Depends(get_user_depend)
+    user: UserRead = Depends(get_user_depend)
 ):
     """
     Возвращает список уведомлений, связанных с текущим пользователем.
@@ -96,7 +97,7 @@ async def get_notifications_for_user_endpoint(
     """
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
-    return await get_notifications_for_user(db, user["id"])
+    return await get_notifications_for_user(db, user.id)
 
 
 # Обновление статуса уведомления
@@ -138,7 +139,7 @@ async def update_notification_status_endpoint(
     is_read: bool = None,
     is_hidden: bool = None,
     db: AsyncSession = Depends(get_db),
-    user: dict = Depends(get_user_depend)
+    user: UserRead = Depends(get_user_depend)
 ):
     """
     Обновляет статус уведомления для текущего пользователя.
@@ -149,7 +150,7 @@ async def update_notification_status_endpoint(
     """
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
-    status = await update_notification_status(db, user["id"], notification_id, is_read, is_hidden)
+    status = await update_notification_status(db, user.id, notification_id, is_read, is_hidden)
     if not status:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Notification not found")
     return status
