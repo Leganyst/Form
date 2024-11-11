@@ -3,8 +3,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db 
 from app.crud.user import create_user
-from app.schemas.user import UserRead
-from app.routers.dependencies.auth import get_user_depend
+from app.schemas.user import UserCreate, UserRead
+from app.routers.dependencies.auth import get_query_params, get_user_depend
 
 router = APIRouter()
 
@@ -52,7 +52,8 @@ router = APIRouter()
         }
     }
 )
-async def auth_user(user: UserRead = Depends(get_user_depend), session: AsyncSession = Depends(get_db)):
+async def auth_user(user: UserRead = Depends(get_user_depend), session: AsyncSession = Depends(get_db),
+                    user_data: dict = Depends(get_query_params)):
     """
     Аутентифицирует пользователя на основе предоставленного токена VK.
 
@@ -63,5 +64,8 @@ async def auth_user(user: UserRead = Depends(get_user_depend), session: AsyncSes
     Можно использовать как GetMe ручку, для получения обновленной информации о пользователе.
     """
     if not user:
-        user = await create_user(session)
+        user = await create_user(session, UserCreate(
+            vk_id=user_data.get("vk_user_id"),
+            phone=None
+        ))
     return user
