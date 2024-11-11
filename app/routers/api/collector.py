@@ -204,7 +204,7 @@ async def delete_collector_endpoint(
     description="Возвращает полные данные о коллекторе по указанному идентификатору.",
     response_description="Подробная информация о коллекторе",
     status_code=status.HTTP_200_OK,
-    tags=["ollector"]
+    tags=["collector"]
 )
 async def get_collector(collector_id: int, session: AsyncSession = Depends(get_db)):
     """
