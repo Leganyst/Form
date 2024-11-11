@@ -5,7 +5,8 @@ from app.crud.collector import (
     create_collector,
     get_collectors_by_user,
     update_collector,
-    delete_collector
+    delete_collector,
+    get_collector_by_id
 )
 from app.schemas.collector import CollectorCreate, CollectorRead
 from app.routers.dependencies.auth import get_user_depend
@@ -193,3 +194,26 @@ async def delete_collector_endpoint(
     success = await delete_collector(db, collector_id)
     if not success:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Collector not found")
+
+
+
+@router.get(
+    "/{collector_id}",
+    response_model=CollectorRead,
+    summary="Получение информации о коллекторе",
+    description="Возвращает полные данные о коллекторе по указанному идентификатору.",
+    response_description="Подробная информация о коллекторе",
+    status_code=status.HTTP_200_OK,
+    tags=["Collectors"]
+)
+async def get_collector(collector_id: int, session: AsyncSession = Depends(get_db)):
+    """
+    Эндпоинт для получения информации о конкретном коллекторе по его идентификатору.
+    """
+    collector = await get_collector_by_id(session, collector_id)
+    if collector is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Collector not found"
+        )
+    return collector

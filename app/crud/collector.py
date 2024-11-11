@@ -3,6 +3,7 @@ from sqlalchemy.future import select
 from sqlalchemy import update, delete
 from app.models.collector import Collector
 from app.schemas.collector import CollectorCreate, CollectorRead
+from typing import Optional
 
 # Create a new collector
 async def create_collector(db: AsyncSession, user_id: int, collector_data: CollectorCreate) -> CollectorRead:
@@ -46,3 +47,9 @@ async def delete_collector(db: AsyncSession, collector_id: int) -> bool:
     result = await db.execute(delete(Collector).where(Collector.id == collector_id))
     await db.commit()
     return result.rowcount > 0
+
+# Get collector by ID
+async def get_collector_by_id(session: AsyncSession, collector_id: int) -> Optional[Collector]:
+    result = await session.execute(select(Collector).filter(Collector.id == collector_id))
+    result_collector = result.scalar_one_or_none()
+    return CollectorRead.model_validate(result_collector) if result_collector else None
