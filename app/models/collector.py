@@ -20,9 +20,12 @@ class Collector(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String, default="сборщик", nullable=False)
     transcription = Column(String, nullable=True)
+    description = Column(String, nullable=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     client_path_type = Column(Enum(ClientPathType), nullable=False)
     plugin = Column(Enum(PluginType), nullable=True)
-
+    count_leads = Column(Integer, default=0)
+    
+    
     user = relationship("User", back_populates="collectors")
     collector_leads = relationship("CollectorLead", back_populates="collector")

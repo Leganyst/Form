@@ -14,10 +14,13 @@ class PluginType(str, Enum):
 
 class CollectorBase(BaseModel):
     name: str = Field(default="сборщик", description="Название сборщика")
+    description: Optional[str] = Field(default="Описание сборщика", description="Описание сборщика")
     transcription: Optional[str] = Field(None, description="Транскрипция названия сборщика")
     client_path_type: ClientPathType = Field(..., description="Тип пути клиента для получения заявок")
     plugin: Optional[PluginType] = Field(None, description="Плагин для интеграции, если выбран способ 'Рассылка'")
-
+    count_leads: Optional[int] = Field(0, description="Количество привлечённых лидов") 
+        
+        
 class CollectorCreate(CollectorBase):
     user_id: int = Field(..., description="ID пользователя, к которому привязан сборщик")
 
@@ -32,6 +35,8 @@ class CollectorRead(CollectorBase):
             id=1,
             name="Collector A",
             transcription="Collector_1",
+            description="Collector_1 desctiption",
             client_path_type=ClientPathType.messenger,
-            plugin=PluginType.vkontakte
+            plugin=PluginType.vkontakte,
+            count_leads=0
         )
