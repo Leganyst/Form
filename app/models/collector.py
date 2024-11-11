@@ -4,15 +4,15 @@ from app.core.database import Base
 
 import enum
 
-class ClientPathType(enum.Enum):
-    MESSENGER = "messenger"
-    SUBSCRIPTION = "subscription"
-    CHAT_BOT = "chat_bot"
+class ClientPathType(str, Enum):
+    MESSENGER = "MESSENGER"
+    SUBSCRIPTION = "SUBSCRIPTION"
+    CHAT_BOT = "CHAT_BOT"
 
-class PluginType(enum.Enum):
-    SENLER = "senler"
-    VKONTAKTE = "vk"
-    BOTHELPER = "bothelper"
+class PluginType(str, Enum):
+    SENLER = "SENLER"
+    VKONTAKTE = "VKONTAKTE"
+    BOTHELPER = "BOTHELPER"
 
 class Collector(Base):
     __tablename__ = "collectors"

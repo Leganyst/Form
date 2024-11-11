@@ -10,8 +10,8 @@ async def create_collector(db: AsyncSession, user_id: int, collector_data: Colle
     collector = Collector(
         name=collector_data.name,
         transcription=collector_data.transcription,
-        client_path_type=collector_data.client_path_type.value,  # Конвертируем в строку
-        plugin=collector_data.plugin.value if collector_data.plugin else None,  # Конвертируем в строку, если не None
+        client_path_type=collector_data.client_path_type.value.upper(),  # Приведение к верхнему регистру
+        plugin=collector_data.plugin.value.upper() if collector_data.plugin else None,  # Приведение к верхнему регистру, если не None
         user_id=user_id,
         description=collector_data.description,
         count_leads=collector_data.count_leads
@@ -35,8 +35,8 @@ async def update_collector(db: AsyncSession, collector_id: int, collector_data: 
         .values(
             name=collector_data.name,
             transcription=collector_data.transcription,
-            client_path_type=collector_data.client_path_type.value,  # Конвертируем в строку
-            plugin=collector_data.plugin.value if collector_data.plugin else None,  # Конвертируем в строку, если не None
+            client_path_type=collector_data.client_path_type.value.upper(),  # Конвертируем в строку
+            plugin=collector_data.plugin.value.upper() if collector_data.plugin else None,  # Конвертируем в строку, если не None
             description=collector_data.description,
             count_leads=collector_data.count_leads
         )
