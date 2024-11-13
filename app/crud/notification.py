@@ -34,10 +34,18 @@ async def update_notification_status(
     db: AsyncSession, user_id: int, notification_id: int, is_read: bool = None, is_hidden: bool = None
 ) -> UserNotificationStatusRead:
     values = {}
+    
+    notification_type = await db.execute(
+        select(Notification.notification_type)
+        .filter(Notification.id == notification_id)
+    )
+    
     if is_read is not None:
         values["is_read"] = is_read
-    if is_hidden is not None:
+        
+    if is_hidden is not None and notification_type != "system":
         values["is_hidden"] = is_hidden
+    
 
     result = await db.execute(
         update(UserNotificationStatus)
