@@ -25,6 +25,7 @@ class Collector(Base):
     client_path_type = Column(Enum(ClientPathType), nullable=False)
     plugin = Column(Enum(PluginType), nullable=True)
     count_leads = Column(Integer, default=0)
+    request_phone_numbers = Column(Boolean, default=False)
     
     
     user = relationship("User", back_populates="collectors")
