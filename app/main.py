@@ -1,6 +1,7 @@
 # app/main.py
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.docs import get_swagger_ui_html
 from app.core.database import engine, Base
 from app.models import combined, user, lead, collector, notification, user_notification_status
@@ -30,6 +31,22 @@ async def lifespan(app: FastAPI):
 #     await engine.dispose()
 
 app = FastAPI(lifespan=lifespan, swagger_ui_parameters={"syntaxHighlight.theme": "obsidian"})
+
+origins = [
+    "https://*.vercel.app",
+    "https://*.wormhole.vk-apps.com",
+    "https://*.pages.vk-apps.com",
+    "https://*.pages-ac.vk-apps.com",
+    "https://pages-ac.vk-apps.com"
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH"],
+    allow_headers=["Content-Type", "Authorization", "X-Requested-With"],
+)
 
 @app.get("/docs", include_in_schema=False)
 async def custom_swagger_ui_html():

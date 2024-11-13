@@ -39,5 +39,6 @@ class CollectorRead(CollectorBase):
             description="Collector_1 desctiption",
             client_path_type=ClientPathType.messenger,
             plugin=PluginType.vkontakte,
-            count_leads=0
+            count_leads=0,
+            request_phone_numbers=False
         )

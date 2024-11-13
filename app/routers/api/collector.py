@@ -11,6 +11,8 @@ from app.crud.collector import (
 from app.schemas.collector import CollectorCreate, CollectorRead
 from app.routers.dependencies.auth import get_user_depend
 from app.schemas.user import UserRead
+from app.schemas.analytics import CollectorAnalytics
+from app.crud.collector import get_collector_analytics
 
 router = APIRouter()
 
@@ -218,3 +220,56 @@ async def get_collector(collector_id: int, session: AsyncSession = Depends(get_d
             detail="Collector not found"
         )
     return collector
+
+
+# Эндпоинт для получения аналитики по коллектору
+@router.get(
+    "/collectors/{collector_id}/analytics",
+    response_model=CollectorAnalytics,
+    tags=["collector"],
+    summary="Получить аналитику по сборщику",
+    description="Возвращает количество лидов, посетителей и CR для указанного сборщика.",
+    responses={
+        200: {
+            "description": "Аналитика успешно получена",
+            "content": {
+                "application/json": {
+                    "example": CollectorAnalytics.example()
+                }
+            }
+        },
+        401: {
+            "description": "Неавторизованная попытка получения аналитики",
+            "content": {
+                "application/json": {
+                    "example": {"detail": "Unauthorized"}
+                }
+            }
+        },
+        404: {
+            "description": "Сборщик не найден",
+            "content": {
+                "application/json": {
+                    "example": {"detail": "Collector not found"}
+                }
+            }       
+        }
+    }
+)
+async def get_collector_analytics_endpoint(
+    collector_id: int,
+    db: AsyncSession = Depends(get_db),
+    user: UserRead = Depends(get_user_depend)
+):
+    """
+    Эндпоинт для получения аналитики по коллектору.
+    
+    - **collector_id**: ID коллектора, по которому требуется аналитика.
+    """
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+    
+    analytics = await get_collector_analytics(db, collector_id)
+    if analytics is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Collector not found")
+    return analytics
