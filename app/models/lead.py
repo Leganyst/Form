@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Enum, Text
+from sqlalchemy import Column, DateTime, Integer, String, Boolean, ForeignKey, Enum, Text
 from sqlalchemy.orm import relationship
 from app.core.database import Base
 
@@ -9,5 +9,7 @@ class Lead(Base):
     phone = Column(String, nullable=True)
     vk_id = Column(String, nullable=True)
     full_name = Column(String, nullable=False)
+    request_form = Column(Boolean, nullable=False)
+    request_datetime = Column(DateTime, nullable=False)
 
     collector_leads = relationship("CollectorLead", back_populates="lead")
