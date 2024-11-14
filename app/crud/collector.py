@@ -6,9 +6,10 @@ from app.models.collector import Collector
 from app.models.combined import CollectorLead  
 from app.schemas.collector import CollectorCreate, CollectorRead
 from app.schemas.analytics import CollectorAnalytics
-from typing import Optional, List
 from app.models.collector import Collector
 from app.models.lead import Lead
+from app.models.user import User
+from typing import Optional, List
 from sqlalchemy import func
 
 # Создание нового коллектора
@@ -23,8 +24,13 @@ async def create_collector(db: AsyncSession, user_id: int, collector_data: Colle
         count_leads=collector_data.count_leads
     )
     db.add(collector)
+    user = await db.execute(select(User).where(User.id == user_id))
+    user = user.scalar_one_or_none()
+    user.collector_count += 1
+    
     await db.commit()
     await db.refresh(collector)
+
 
     collector_dict = {
         "id": collector.id,
@@ -111,6 +117,10 @@ async def update_collector(
 # Удаление коллектора по его ID
 async def delete_collector(db: AsyncSession, collector_id: int) -> bool:
     result = await db.execute(delete(Collector).where(Collector.id == collector_id))
+    
+    user = await db.execute(select(User).where(User.id == collector_id))
+    user = user.scalar_one_or_none()
+    user.collector_count -= 1
     await db.commit()
     return result.rowcount > 0
 
