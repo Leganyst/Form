@@ -3,6 +3,7 @@ from sqlalchemy.future import select
 from sqlalchemy import update, delete
 from sqlalchemy.orm import selectinload
 from app.models.collector import Collector
+from app.models.combined import CollectorLead  
 from app.schemas.collector import CollectorCreate, CollectorRead
 from app.schemas.analytics import CollectorAnalytics
 from typing import Optional, List
@@ -31,8 +32,12 @@ async def create_collector(db: AsyncSession, user_id: int, collector_data: Colle
         "description": collector.description,
         "transcription": collector.transcription,
         "client_path_type": collector.client_path_type,
+        "client_path": collector.client_path,
         "plugin": collector.plugin,
-        "count_leads": collector.count_leads
+        "count_leads": collector.count_leads,
+        "first_bonus": collector.first_bonus,
+        "second_bonus": collector.second_bonus,
+        "third_bonus": collector.third_bonus
     }
     return CollectorRead(**collector_dict)
 
@@ -53,8 +58,12 @@ async def get_collectors_by_user(db: AsyncSession, user_id: int) -> List[Collect
             "description": c.description,
             "transcription": c.transcription,
             "client_path_type": c.client_path_type,
+            "client_path": c.client_path,
             "plugin": c.plugin,
-            "count_leads": c.count_leads
+            "count_leads": c.count_leads,
+            "first_bonus": c.first_bonus,
+            "second_bonus": c.second_bonus,
+            "third_bonus": c.third_bonus
         }) for c in collectors
     ]
 
@@ -76,7 +85,7 @@ async def update_collector(
         )
         .returning(Collector)
     )
-    collector = result.scalar_one_or_none()
+    collector: Collector = result.scalar_one_or_none()
     await db.commit()
 
     if collector:
@@ -88,8 +97,12 @@ async def update_collector(
             "description": collector.description,
             "transcription": collector.transcription,
             "client_path_type": collector.client_path_type,
+            "client_path": collector.client_path,
             "plugin": collector.plugin,
             "count_leads": collector.count_leads,
+            "first_bonus": collector.first_bonus,
+            "second_bonus": collector.second_bonus,
+            "third_bonus": collector.third_bonus
         }
         return CollectorRead(**collector_dict)
     return None
@@ -118,8 +131,12 @@ async def get_collector_by_id(session: AsyncSession, collector_id: int) -> Optio
             "description": result_collector.description,
             "transcription": result_collector.transcription,
             "client_path_type": result_collector.client_path_type,
+            "client_path": result_collector.client_path,
             "plugin": result_collector.plugin,
-            "count_leads": result_collector.count_leads
+            "count_leads": result_collector.count_leads,
+            "first_bonus": result_collector.first_bonus,
+            "second_bonus": result_collector.second_bonus,
+            "third_bonus": result_collector.third_bonus
         }
         return CollectorRead(**collector_dict)
     return None
@@ -127,27 +144,28 @@ async def get_collector_by_id(session: AsyncSession, collector_id: int) -> Optio
 
 # Получение аналитики по коллекторам
 async def get_collector_analytics(db: AsyncSession, collector_id: int) -> Optional[CollectorAnalytics]:
-    # Подсчитываем количество лидов по этому коллектору
+    # Проверяем, существует ли коллектор
     collector = await db.execute(select(Collector).where(Collector.id == collector_id))
     collector = collector.scalar_one_or_none()
     if not collector:
         return None
-    
-    lead_count = await db.execute(
-        select(func.count(Lead.id))
-        .where(Lead.collector_leads.any(collector_id=collector_id))
-    )
-    lead_count = lead_count.scalar() or 0
 
-    # Подсчитываем общее количество посещений (лиды + посетители без заявок)
-    visit_count = await db.execute(
-        select(func.count(Lead.id))
-        .where(Lead.collector_leads.any(collector_id=collector_id))
-        .where(Lead.request_form == False)
+    # Подсчитываем количество лидов, которые отправили заявку (request_form=True)
+    lead_count_query = await db.execute(
+        select(func.count(CollectorLead.lead_id))
+        .where(CollectorLead.collector_id == collector_id)
+        .where(CollectorLead.request_form == True)
     )
-    visit_count = visit_count.scalar() or 0
+    lead_count = lead_count_query.scalar() or 0
 
-    # Расчет CR (лиды / посещения * 100%)
+    # Подсчитываем общее количество посещений (лиды, у которых request_form=False)
+    visit_count_query = await db.execute(
+        select(func.count(CollectorLead.lead_id))
+        .where(CollectorLead.collector_id == collector_id)
+    )
+    visit_count = visit_count_query.scalar() or 0
+
+    # Расчёт CR (лиды / посещения * 100%)
     conversion_rate = (lead_count / visit_count * 100) if visit_count > 0 else 0
 
     # Возвращаем объект CollectorAnalytics для валидации

@@ -9,6 +9,8 @@ from app.routers.api.user import router as user_router
 from app.routers.api.auth import router as auth_router
 from app.routers.api.collector import router as collector_router
 from app.routers.api.notification import router as notification_router
+from app.routers.api.lead import router as lead_router
+
 
 
 
@@ -60,3 +62,4 @@ app.include_router(user_router, prefix="/api")
 app.include_router(auth_router, prefix="/api")
 app.include_router(collector_router, prefix="/api")
 app.include_router(notification_router, prefix="/api")
+app.include_router(lead_router, prefix="/api")

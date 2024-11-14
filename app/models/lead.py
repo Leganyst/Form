@@ -9,7 +9,5 @@ class Lead(Base):
     phone = Column(String, nullable=True)
     vk_id = Column(String, nullable=True)
     full_name = Column(String, nullable=False)
-    request_form = Column(Boolean, nullable=False)
-    request_datetime = Column(DateTime, nullable=False)
 
     collector_leads = relationship("CollectorLead", back_populates="lead")
