@@ -5,7 +5,7 @@ class NotificationBase(BaseModel):
     title: str = Field(..., description="Название уведомления")
     description: str = Field(..., description="Краткое описание уведомления")
     link: Optional[str] = Field(None, description="Ссылка, связанная с уведомлением")
-    notification_type: str = Field(..., description="Тип уведомления ('заданное', 'новостное' и т.д.)")
+    notification_type: str = Field(..., description="Тип уведомления ('system', 'news' и т.д.) (system нельзя закрыть, news - можно)")
 
 class NotificationCreate(NotificationBase):
     pass

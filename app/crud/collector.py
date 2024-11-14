@@ -4,8 +4,11 @@ from sqlalchemy import update, delete
 from sqlalchemy.orm import selectinload
 from app.models.collector import Collector
 from app.schemas.collector import CollectorCreate, CollectorRead
+from app.schemas.analytics import CollectorAnalytics
 from typing import Optional, List
-
+from app.models.collector import Collector
+from app.models.lead import Lead
+from sqlalchemy import func
 
 # Создание нового коллектора
 async def create_collector(db: AsyncSession, user_id: int, collector_data: CollectorCreate) -> CollectorRead:
@@ -120,3 +123,37 @@ async def get_collector_by_id(session: AsyncSession, collector_id: int) -> Optio
         }
         return CollectorRead(**collector_dict)
     return None
+
+
+# Получение аналитики по коллекторам
+async def get_collector_analytics(db: AsyncSession, collector_id: int) -> Optional[CollectorAnalytics]:
+    # Подсчитываем количество лидов по этому коллектору
+    collector = await db.execute(select(Collector).where(Collector.id == collector_id))
+    collector = collector.scalar_one_or_none()
+    if not collector:
+        return None
+    
+    lead_count = await db.execute(
+        select(func.count(Lead.id))
+        .where(Lead.collector_leads.any(collector_id=collector_id))
+    )
+    lead_count = lead_count.scalar() or 0
+
+    # Подсчитываем общее количество посещений (лиды + посетители без заявок)
+    visit_count = await db.execute(
+        select(func.count(Lead.id))
+        .where(Lead.collector_leads.any(collector_id=collector_id))
+        .where(Lead.request_form == False)
+    )
+    visit_count = visit_count.scalar() or 0
+
+    # Расчет CR (лиды / посещения * 100%)
+    conversion_rate = (lead_count / visit_count * 100) if visit_count > 0 else 0
+
+    # Возвращаем объект CollectorAnalytics для валидации
+    return CollectorAnalytics(
+        collector_id=collector_id,
+        leads_count=lead_count,
+        visit_count=visit_count,
+        conversion_rate=conversion_rate
+    )
