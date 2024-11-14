@@ -11,7 +11,7 @@ class ClientPathType(enum.Enum):
 
 class PluginType(enum.Enum):
     SENLER = "senler"
-    VKONTAKTE = "vk"
+    VKONTAKTE = "vkontakte"
     BOTHELPER = "bothelper"
 
 class Collector(Base):
