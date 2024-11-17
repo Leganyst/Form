@@ -1,9 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 from app.core.database import get_db
 from app.crud.lead import (
     create_lead_visit,
+    get_leads_by_collector,
     submit_lead_request,
     get_collector_analytics,
     update_lead
@@ -13,7 +15,8 @@ from app.schemas.analytics import CollectorAnalytics
 from app.schemas.combined import CollectorLeadRead
 from app.schemas.lead import LeadCreate, LeadRead
 from app.models.combined import CollectorLead
-from typing import Optional
+from app.models.lead import Lead
+from typing import Optional, List
 
 from app.schemas.user import UserRead
 
@@ -72,3 +75,22 @@ async def get_collector_analytics_endpoint(
     except ValueError:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid period. Choose 'day', 'week', or 'month'.")
     return analytics
+
+
+@router.get("/collectors/{collector_id}/leads", response_model=List[LeadRead], tags=["leads"])
+async def get_leads_endpoint(
+    collector_id: int,
+    search: Optional[str] = Query(None, description="Поиск по имени лидов"),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Получить список лидов для указанного коллектора. 
+    Можно использовать поисковый параметр `search` для фильтрации по имени.
+    
+    - **collector_id**: ID коллектора.
+    - **search**: Поисковый параметр для фильтрации по имени.
+    """
+    leads = await get_leads_by_collector(db, collector_id, search)
+    if not leads:
+        raise HTTPException(status_code=404, detail="No leads found for this collector.")
+    return leads

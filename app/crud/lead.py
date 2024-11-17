@@ -1,20 +1,13 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update, func
+from sqlalchemy import select, update, func, distinct
 from sqlalchemy.orm import selectinload
 from sqlalchemy.exc import IntegrityError
 from datetime import datetime, timedelta
 from app.models.collector import Collector
 from app.models.combined import CollectorLead
 from app.schemas.analytics import CollectorAnalytics
-from typing import Optional, Union
-
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-from sqlalchemy.exc import IntegrityError
-from app.models.combined import CollectorLead
 from app.models.lead import Lead
-from typing import Optional
-
+from typing import Optional, List
 from app.schemas.lead import LeadRead
 from app.utils.get_user_vk import get_user_full_name
 
@@ -175,3 +168,28 @@ async def update_lead(db: AsyncSession, phone: str, vk_id: str) -> Lead:
     )
 
     return new_lead
+
+
+async def get_leads_by_collector(
+    db: AsyncSession, collector_id: int, search: Optional[str] = None
+) -> List[Lead]:
+    """
+    Получить список лидов для указанного коллектора.
+
+    :param db: Асинхронная сессия базы данных.
+    :param collector_id: ID коллектора.
+    :param search: Поисковый запрос для фильтрации по имени.
+    :return: Список уникальных лидов.
+    """
+    query = (
+        select(Lead)
+        .join(Lead.collector_leads)
+        .filter(Collector.id == collector_id)
+        .options(selectinload(Lead.collector_leads))
+        .distinct()
+    )
+    if search:
+        query = query.filter(Lead.full_name.ilike(f"%{search}%"))
+
+    result = await db.execute(query)
+    return result.scalars().all()
