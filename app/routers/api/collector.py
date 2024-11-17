@@ -8,7 +8,7 @@ from app.crud.collector import (
     delete_collector,
     get_collector_by_id
 )
-from app.schemas.collector import CollectorCreate, CollectorRead
+from app.schemas.collector import CollectorCreate, CollectorRead, CollectorReadWithVkId
 from app.routers.dependencies.auth import get_user_depend
 from app.schemas.user import UserRead
 from app.schemas.analytics import CollectorAnalytics
@@ -202,7 +202,7 @@ async def delete_collector_endpoint(
 
 @router.get(
     "/{collector_id}",
-    response_model=CollectorRead,
+    response_model=CollectorReadWithVkId,
     summary="Получение информации о коллекторе",
     description="Возвращает полные данные о коллекторе по указанному идентификатору.",
     response_description="Подробная информация о коллекторе",

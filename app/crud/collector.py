@@ -4,7 +4,7 @@ from sqlalchemy import update, delete
 from sqlalchemy.orm import selectinload
 from app.models.collector import Collector
 from app.models.combined import CollectorLead  
-from app.schemas.collector import CollectorCreate, CollectorRead
+from app.schemas.collector import CollectorCreate, CollectorRead, CollectorReadWithVkId
 from app.schemas.analytics import CollectorAnalytics
 from app.models.collector import Collector
 from app.models.lead import Lead
@@ -85,9 +85,14 @@ async def update_collector(
             name=collector_data.name,
             transcription=collector_data.transcription,
             client_path_type=collector_data.client_path_type.value.upper(),
+            client_path=collector_data.client_path,
             plugin=collector_data.plugin.value.upper() if collector_data.plugin else None,
             description=collector_data.description,
             count_leads=collector_data.count_leads,
+            request_phone_numbers=collector_data.request_phone_numbers,
+            first_bonus=collector_data.first_bonus,
+            second_bonus=collector_data.second_bonus,
+            third_bonus=collector_data.third_bonus
         )
         .returning(Collector)
     )
@@ -106,6 +111,7 @@ async def update_collector(
             "client_path": collector.client_path,
             "plugin": collector.plugin,
             "count_leads": collector.count_leads,
+            "request_phone_numbers": collector.request_phone_numbers,
             "first_bonus": collector.first_bonus,
             "second_bonus": collector.second_bonus,
             "third_bonus": collector.third_bonus
@@ -126,13 +132,19 @@ async def delete_collector(db: AsyncSession, collector_id: int) -> bool:
 
 
 # Получение коллектора по его ID
-async def get_collector_by_id(session: AsyncSession, collector_id: int) -> Optional[CollectorRead]:
+async def get_collector_by_id(session: AsyncSession, collector_id: int) -> Optional[CollectorReadWithVkId]:
     result = await session.execute(
         select(Collector)
         .options(selectinload(Collector.user), selectinload(Collector.collector_leads))
         .filter(Collector.id == collector_id)
     )
     result_collector = result.scalar_one_or_none()
+    
+    user_vk_id = await session.execute(
+        select(User.vk_id)
+        .where(User.id == result_collector.user_id)
+    )
+    user_vk_id = user_vk_id.scalar_one_or_none()
 
     if result_collector:
         collector_dict = {
@@ -146,9 +158,10 @@ async def get_collector_by_id(session: AsyncSession, collector_id: int) -> Optio
             "count_leads": result_collector.count_leads,
             "first_bonus": result_collector.first_bonus,
             "second_bonus": result_collector.second_bonus,
-            "third_bonus": result_collector.third_bonus
+            "third_bonus": result_collector.third_bonus,
+            "vk_id": user_vk_id
         }
-        return CollectorRead(**collector_dict)
+        return CollectorReadWithVkId(**collector_dict)
     return None
 
 

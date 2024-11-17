@@ -51,3 +51,25 @@ class CollectorRead(CollectorBase):
             second_bonus="Second bonus",
             third_bonus="Third bonus"
         )
+
+
+class CollectorReadWithVkId(CollectorRead):
+    vk_id: str = Field(..., description="VK ID обладателя сборщика")
+    
+    @classmethod
+    def example(cls):
+        return cls(
+            id=1,
+            name="Collector A",
+            transcription="Collector_1",
+            description="Collector_1 desctiption",
+            client_path_type=ClientPathType.messenger,
+            client_path="https://vk.com/id12434239",
+            plugin=PluginType.vkontakte,
+            count_leads=0,
+            request_phone_numbers=False,
+            first_bonus="First bonus",
+            second_bonus="Second bonus",
+            third_bonus="Third bonus",
+            vk_id="42385843985" 
+        )
