@@ -28,7 +28,8 @@ class CollectorBase(BaseModel):
     
         
 class CollectorCreate(CollectorBase):
-    user_id: int = Field(..., description="ID пользователя, к которому привязан сборщик")
+    # user_id: int = Field(..., description="ID пользователя, к которому привязан сборщик")
+    pass
 
 class CollectorRead(CollectorBase):
     id: int = Field(..., description="Уникальный идентификатор сборщика")

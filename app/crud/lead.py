@@ -1,5 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, func
+from sqlalchemy.orm import selectinload
 from sqlalchemy.exc import IntegrityError
 from datetime import datetime, timedelta
 from app.models.collector import Collector
@@ -14,10 +15,13 @@ from app.models.combined import CollectorLead
 from app.models.lead import Lead
 from typing import Optional
 
+from app.schemas.lead import LeadRead
+from app.utils.get_user_vk import get_user_full_name
+
 # Создание записи о переходе лида
-async def create_lead_visit(db: AsyncSession, vk_id: str, collector_id: int, full_name: str) -> Optional[CollectorLead]:
+async def create_lead_visit(db: AsyncSession, vk_id: str, collector_id: int) -> Optional[CollectorLead]:
     # Получаем или создаем лида
-    lead = await get_or_create_lead(db, vk_id, full_name)
+    lead = await get_or_create_lead(db, vk_id)
     if not lead:
         # Если создание лида не удалось, возвращаем None
         return None
@@ -67,31 +71,26 @@ async def submit_lead_request(db: AsyncSession, vk_id: str, collector_id: int) -
     )
     
     if not lead:
-        # Если лида с таким vk_id нет, ничего не делаем и возвращаем None
         return None
 
-    # Теперь ищем запись в CollectorLead для данного lead_id и collector_id
+    # Загружаем CollectorLead с предварительной загрузкой связанных данных
     collector_lead = await db.scalar(
-        select(CollectorLead).where(
+        select(CollectorLead)
+        .options(selectinload(CollectorLead.lead))
+        .where(
             CollectorLead.collector_id == collector_id,
             CollectorLead.lead_id == lead.id
         )
     )
 
-    # Проверяем, что запись существует и что заявка еще не отправлена
     if collector_lead and not collector_lead.request_form:
-        # Обновляем запись, устанавливая request_form=True и добавляя время заявки
-        await db.execute(
-            update(CollectorLead)
-            .where(CollectorLead.collector_id == collector_id, CollectorLead.lead_id == lead.id)
-            .values(request_form=True, datetime_request=datetime.utcnow())
-        )
+        # Обновляем запись
+        collector_lead.request_form = True
+        collector_lead.datetime_request = datetime.utcnow()
         await db.commit()
         await db.refresh(collector_lead)
-        
         return collector_lead
-        
-    # Если запись не существует или заявка уже отправлена, возвращаем None
+
     return None
 
 
@@ -135,7 +134,7 @@ async def get_collector_analytics(db: AsyncSession, collector_id: int, period: s
 
 
 # Проверка на существование лида и создание нового, если его нет
-async def get_or_create_lead(db: AsyncSession, vk_id: str, full_name: str) -> Lead:
+async def get_or_create_lead(db: AsyncSession, vk_id: str) -> Lead:
     # Ищем лида с заданным vk_id
     existing_lead = await db.scalar(
         select(Lead).where(Lead.vk_id == vk_id)
@@ -148,7 +147,7 @@ async def get_or_create_lead(db: AsyncSession, vk_id: str, full_name: str) -> Le
     # Если лида с таким vk_id нет, создаем новый объект Lead
     new_lead = Lead(
         vk_id=vk_id,
-        full_name=full_name,
+        full_name=get_user_full_name(vk_id),
         phone=None  # Поле phone пока оставляем пустым
     )
     db.add(new_lead)
@@ -158,4 +157,21 @@ async def get_or_create_lead(db: AsyncSession, vk_id: str, full_name: str) -> Le
         await db.rollback()
         return None
     await db.refresh(new_lead)
+    return new_lead
+
+
+async def update_lead(db: AsyncSession, phone: str, vk_id: str) -> Lead:
+    updated_lead = await db.execute(
+        update(Lead)
+        .where(Lead.vk_id == vk_id)
+        .values(phone=phone)
+    )
+    
+    await db.commit()
+
+    new_lead = await db.scalar(
+        select(Lead)
+        .where(Lead.vk_id == vk_id)
+    )
+
     return new_lead

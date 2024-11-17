@@ -12,5 +12,5 @@ class CollectorLead(Base):
     datetime_request = Column(DateTime, nullable=True)
     # Дополнительные поля могут быть добавлены здесь
 
-    collector = relationship("Collector", back_populates="collector_leads")
+    collector = relationship("Collector", back_populates="collector_leads", lazy="selectin")
     lead = relationship("Lead", back_populates="collector_leads")

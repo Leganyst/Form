@@ -6,8 +6,8 @@ class LeadBase(BaseModel):
     vk_id: Optional[str] = Field(None, description="ID лида во ВКонтакте")
     full_name: str = Field(..., description="Полное имя лида")
 
-class LeadCreate(LeadBase):
-    pass
+class LeadCreate(BaseModel):
+    vk_id: str = Field(..., description="ID лида во ВКонтакте")        
 
 class LeadRead(LeadBase):
     id: int = Field(..., description="Уникальный идентификатор лида")

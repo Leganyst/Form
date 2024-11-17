@@ -5,7 +5,8 @@ from app.core.database import get_db
 from app.crud.lead import (
     create_lead_visit,
     submit_lead_request,
-    get_collector_analytics
+    get_collector_analytics,
+    update_lead
 )
 from app.routers.dependencies.auth import get_user_depend
 from app.schemas.analytics import CollectorAnalytics
@@ -29,7 +30,7 @@ async def create_lead(
     Создает новую запись о переходе лида с использованием vk_id для указанного collector_id, если такой записи еще нет.
     Устанавливает флаг `checked_form=True` для нового лида.
     """
-    lead = await create_lead_visit(db, lead_data.vk_id, collector_id, lead_data.full_name)
+    lead = await create_lead_visit(db, lead_data.vk_id, collector_id)
     if not lead:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Lead visit already recorded for this collector.")
     return LeadRead.model_validate(lead)
@@ -39,15 +40,17 @@ async def create_lead(
 async def update_lead_request(
     collector_id: int,
     vk_id: str,
+    phone_number: str = None,
     db: AsyncSession = Depends(get_db)
 ):
-    """
-    Обновляет информацию о лиде при отправке заявки, используя vk_id.
-    Устанавливает флаг `request_form=True` и записывает `datetime_request`.
-    """
     lead = await submit_lead_request(db, vk_id, collector_id)
+    await update_lead(db, phone_number, vk_id)
+
     if not lead:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Lead not found or request already submitted.")
+
+    # Обновляем объект и возвращаем его
+    await db.refresh(lead)
     return CollectorLeadRead.model_validate(lead)
 
 
