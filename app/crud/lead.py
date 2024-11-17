@@ -32,7 +32,10 @@ async def create_lead_visit(db: AsyncSession, vk_id: str, collector_id: int, ful
     
     if existing_lead:
         # Если запись уже существует, просто возвращаем её, ничего не изменяя
-        return existing_lead
+        lead_result = await db.scalar(
+            select(Lead).where(Lead.id == lead.id)
+        )
+        return lead_result
 
     # Создаем новую запись в CollectorLead с checked_form=True
     new_lead = CollectorLead(
