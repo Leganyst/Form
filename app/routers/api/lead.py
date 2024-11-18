@@ -23,7 +23,7 @@ from app.schemas.user import UserRead
 router = APIRouter()
 
 # Эндпоинт для создания записи о переходе лида с использованием vk_id
-@router.post("/collectors/{collector_id}/leads", response_model=LeadRead, status_code=status.HTTP_201_CREATED)
+@router.post("/collectors/{collector_id}/leads", response_model=LeadRead, status_code=status.HTTP_201_CREATED, tags=["leads"])
 async def create_lead(
     collector_id: int,
     lead_data: LeadCreate,
@@ -38,8 +38,9 @@ async def create_lead(
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Lead visit already recorded for this collector.")
     return LeadRead.model_validate(lead)
 
+
 # Эндпоинт для обновления информации о лидах при отправке заявки
-@router.patch("/collectors/{collector_id}/leads/{vk_id}", response_model=CollectorLeadRead)
+@router.patch("/collectors/{collector_id}/leads/{vk_id}", response_model=CollectorLeadRead, tags=["leads"])
 async def update_lead_request(
     collector_id: int,
     vk_id: str,
@@ -57,8 +58,12 @@ async def update_lead_request(
     return CollectorLeadRead.model_validate(lead)
 
 
-# Эндпоинт для получения аналитики по коллектору
-@router.get("/collectors/{collector_id}/analytics", response_model=CollectorAnalytics)
+@router.get(
+    "/collectors/{collector_id}/analytics", 
+    response_model=CollectorAnalytics, 
+    tags=["collector"], 
+    operation_id="get_collector_analytics_by_period"
+)
 async def get_collector_analytics_endpoint(
     collector_id: int,
     period: str,

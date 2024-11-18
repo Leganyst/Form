@@ -9,7 +9,7 @@ from app.schemas.analytics import CollectorAnalytics
 from app.models.lead import Lead
 from typing import Optional, List
 from app.schemas.lead import LeadRead
-from app.utils.get_user_vk import get_user_full_name
+from app.utils.get_user_vk import get_user_full_name, get_user_info
 
 # Создание записи о переходе лида
 async def create_lead_visit(db: AsyncSession, vk_id: str, collector_id: int) -> Optional[CollectorLead]:
@@ -172,14 +172,14 @@ async def update_lead(db: AsyncSession, phone: str, vk_id: str) -> Lead:
 
 async def get_leads_by_collector(
     db: AsyncSession, collector_id: int, search: Optional[str] = None
-) -> List[Lead]:
+) -> List[LeadRead]:
     """
-    Получить список лидов для указанного коллектора.
+    Получить список лидов для указанного коллектора с информацией о фото.
 
     :param db: Асинхронная сессия базы данных.
     :param collector_id: ID коллектора.
     :param search: Поисковый запрос для фильтрации по имени.
-    :return: Список уникальных лидов.
+    :return: Список лидов с информацией о фото.
     """
     query = (
         select(Lead)
@@ -192,4 +192,29 @@ async def get_leads_by_collector(
         query = query.filter(Lead.full_name.ilike(f"%{search}%"))
 
     result = await db.execute(query)
-    return result.scalars().all()
+    leads = result.scalars().all()
+
+    enriched_leads = []
+    for lead in leads:
+        try:
+            vk_info = await get_user_info(lead.vk_id)
+            lead_data = LeadRead.model_validate({
+                "id": lead.id,
+                "phone": lead.phone,
+                "vk_id": lead.vk_id,
+                "full_name": lead.full_name,
+                "photo": vk_info.get("photo_200"),
+            })
+            enriched_leads.append(lead_data)
+        except RuntimeError:
+            # Если информация из ВК не доступна, добавляем без фото
+            lead_data = LeadRead.model_validate({
+                "id": lead.id,
+                "phone": lead.phone,
+                "vk_id": lead.vk_id,
+                "full_name": lead.full_name,
+                "photo": None,
+            })
+            enriched_leads.append(lead_data)
+
+    return enriched_leads
