@@ -174,7 +174,8 @@ async def get_leads_by_collector(
     db: AsyncSession, collector_id: int, search: Optional[str] = None
 ) -> List[LeadRead]:
     """
-    Получить список лидов для указанного коллектора с информацией о фото.
+    Получить список лидов для указанного коллектора, которые оставили заявку,
+    с информацией о фото.
 
     :param db: Асинхронная сессия базы данных.
     :param collector_id: ID коллектора.
@@ -184,7 +185,10 @@ async def get_leads_by_collector(
     query = (
         select(Lead)
         .join(Lead.collector_leads)
-        .filter(Collector.id == collector_id)
+        .filter(
+            CollectorLead.collector_id == collector_id,
+            CollectorLead.request_form == True  # Добавляем фильтр только для оставивших заявку
+        )
         .options(selectinload(Lead.collector_leads))
         .distinct()
     )
@@ -207,7 +211,6 @@ async def get_leads_by_collector(
             })
             enriched_leads.append(lead_data)
         except RuntimeError:
-            # Если информация из ВК не доступна, добавляем без фото
             lead_data = LeadRead.model_validate({
                 "id": lead.id,
                 "phone": lead.phone,
