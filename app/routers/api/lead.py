@@ -5,6 +5,7 @@ from sqlalchemy import select
 from app.core.database import get_db
 from app.crud.lead import (
     create_lead_visit,
+    delete_lead,
     get_leads_by_collector,
     submit_lead_request,
     get_collector_analytics,
@@ -99,3 +100,23 @@ async def get_leads_endpoint(
     if not leads:
         raise HTTPException(status_code=404, detail="No leads found for this collector.")
     return leads
+
+
+@router.delete("/collectors/{collector_id}/leads/{vk_id}", tags=["leads"], status_code=status.HTTP_204_NO_CONTENT)
+async def delete_lead_endpoint(
+    collector_id: int,
+    vk_id: str,
+    db: AsyncSession = Depends(get_db),
+    group: GroupRead = Depends(get_group_depend)
+):
+    """
+    Удаляет запись о лиде по его vk_id для указанного collector_id.
+    """
+    success = await delete_lead(collector_id=collector_id, vk_id=vk_id, db=db)
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Lead not found or not associated with this collector."
+        )
+    # Возвращаем пустой ответ без тела
+    return

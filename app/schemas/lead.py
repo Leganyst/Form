@@ -11,7 +11,7 @@ class LeadCreate(BaseModel):
 
 class LeadRead(LeadBase):
     id: int = Field(..., description="Уникальный идентификатор лида")
-    photo: Optional[str] = Field(..., description="Ссылка на фото лида")
+    photo: Optional[str] = Field(None, description="Ссылка на фото лида")
     
     model_config = ConfigDict(from_attributes=True)
 
@@ -22,4 +22,5 @@ class LeadRead(LeadBase):
             phone="+1234567890",
             vk_id="lead_67890",
             full_name="John Doe",
+            photo=None
         )

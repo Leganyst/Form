@@ -1,5 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update, func, distinct
+from sqlalchemy import select, update, func, distinct, delete
 from sqlalchemy.orm import selectinload
 from sqlalchemy.exc import IntegrityError
 from datetime import datetime, timedelta
@@ -221,3 +221,33 @@ async def get_leads_by_collector(
             enriched_leads.append(lead_data)
 
     return enriched_leads
+
+
+async def delete_lead(collector_id: int, vk_id: str, db: AsyncSession) -> bool:
+    """
+    Удаляет запись лида из таблицы CollectorLead по collector_id и vk_id.
+
+    :param collector_id: ID коллектора.
+    :param vk_id: VK ID лида.
+    :param db: Асинхронная сессия базы данных.
+    :return: True, если запись была удалена, иначе False.
+    """
+    # Извлекаем lead_id из таблицы Leads
+    result = await db.execute(
+        select(Lead.id).where(Lead.vk_id == vk_id)
+    )
+    lead = result.scalar_one_or_none()
+
+    if not lead:
+        # Если лида с таким vk_id не существует
+        return False
+
+    # Удаляем запись из таблицы CollectorLead
+    delete_result = await db.execute(
+        delete(CollectorLead).where(
+            CollectorLead.collector_id == collector_id,
+            CollectorLead.lead_id == lead  # Используем lead_id, найденный ранее
+        )
+    )
+    await db.commit()
+    return delete_result.rowcount > 0
