@@ -141,7 +141,7 @@ async def update_collector_endpoint(
     group: GroupRead = Depends(get_group_depend)
 ):
     """
-    Обновляет данные сборщика, принадлежащего текущему пользователю.
+    Обновляет данные сборщика, принадлежащего текущей группе.
 
     - **collector_id**: ID сборщика, который требуется обновить.
     - **collector_data**: Новые данные сборщика.
@@ -214,7 +214,7 @@ async def get_collector(collector_id: int, session: AsyncSession = Depends(get_d
     """
     Эндпоинт для получения информации о конкретном коллекторе по его идентификатору.
     """
-    collector = await get_collector_by_id(session, collector_id)
+    collector = await get_collector_by_id(session, collector_id, group)
     if collector is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -270,7 +270,7 @@ async def get_collector_analytics_endpoint(
     if not group:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
     
-    analytics = await get_collector_analytics(db, collector_id)
+    analytics = await get_collector_analytics(db, collector_id, group)
     if analytics is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Collector not found")
     return analytics

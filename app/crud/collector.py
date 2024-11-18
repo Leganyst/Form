@@ -12,6 +12,8 @@ from app.models.group import Group
 from typing import Optional, List
 from sqlalchemy import func
 
+from app.schemas.group import GroupRead
+
 # Создание нового коллектора
 async def create_collector(db: AsyncSession, group_id: int, collector_data: CollectorCreate) -> CollectorRead:
     collector = Collector(
@@ -136,11 +138,11 @@ async def delete_collector(db: AsyncSession, collector_id: int) -> bool:
 
 
 # Получение коллектора по его ID
-async def get_collector_by_id(session: AsyncSession, collector_id: int) -> Optional[CollectorReadWithVkId]:
+async def get_collector_by_id(session: AsyncSession, collector_id: int, group: GroupRead) -> Optional[CollectorReadWithVkId]:
     result = await session.execute(
         select(Collector)
         .options(selectinload(Collector.group), selectinload(Collector.collector_leads))
-        .filter(Collector.id == collector_id)
+        .filter(Collector.id == collector_id, Collector.group_id == group.id)
     )
     result_collector = result.scalar_one_or_none()
     
@@ -174,9 +176,10 @@ async def get_collector_by_id(session: AsyncSession, collector_id: int) -> Optio
 
 
 # Получение аналитики по коллекторам
-async def get_collector_analytics(db: AsyncSession, collector_id: int) -> Optional[CollectorAnalytics]:
+async def get_collector_analytics(db: AsyncSession, collector_id: int, group: GroupRead) -> Optional[CollectorAnalytics]:
     # Проверяем, существует ли коллектор
-    collector = await db.execute(select(Collector).where(Collector.id == collector_id))
+    collector = await db.execute(select(Collector).where(Collector.id == collector_id)
+                                 .where(Collector.group_id == group.id))
     collector = collector.scalar_one_or_none()
     if not collector:
         return None
