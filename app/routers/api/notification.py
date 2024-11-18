@@ -3,13 +3,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.crud.notification import (
     create_notification,
-    get_notifications_for_user,
+    get_notifications_for_group,
     update_notification_status
 )
 from app.schemas.notification import NotificationCreate, NotificationRead
-from app.schemas.user import UserRead
-from app.schemas.user_notification_status import UserNotificationStatusRead
-from app.routers.dependencies.auth import get_user_depend
+from app.schemas.group import GroupRead
+from app.schemas.group_notification_status import GroupNotificationStatusRead
+from app.routers.dependencies.auth import get_group_depend
 
 router = APIRouter()
 
@@ -86,24 +86,24 @@ async def create_notification_endpoint(
         }
     }
 )
-async def get_notifications_for_user_endpoint(
+async def get_notifications_for_group_endpoint(
     db: AsyncSession = Depends(get_db),
-    user: UserRead = Depends(get_user_depend)
+    group: GroupRead = Depends(get_group_depend)
 ):
     """
     Возвращает список уведомлений, связанных с текущим пользователем.
 
-    - **user**: Текущий авторизованный пользователь.
+    - **group**: Текущая авторизованная группа.
     """
-    if not user:
+    if not group:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
-    return await get_notifications_for_user(db, user.id)
+    return await get_notifications_for_group(db, group.id)
 
 
 # Обновление статуса уведомления
 @router.patch(
     "/notifications/{notification_id}",
-    response_model=UserNotificationStatusRead,
+    response_model=GroupNotificationStatusRead,
     summary="Обновить статус уведомления",
     tags=["notification"],
     description="Обновляет статус уведомления для текущего пользователя, позволяя отметить уведомление как прочитанное или скрытое.",
@@ -112,7 +112,7 @@ async def get_notifications_for_user_endpoint(
             "description": "Статус уведомления успешно обновлён",
             "content": {
                 "application/json": {
-                    "example": UserNotificationStatusRead.example()
+                    "example": GroupNotificationStatusRead.example()
                 }
             }
         },
@@ -139,7 +139,7 @@ async def update_notification_status_endpoint(
     is_read: bool = None,
     is_hidden: bool = None,
     db: AsyncSession = Depends(get_db),
-    user: UserRead = Depends(get_user_depend)
+    group: GroupRead = Depends(get_group_depend)
 ):
     """
     Обновляет статус уведомления для текущего пользователя.
@@ -148,9 +148,9 @@ async def update_notification_status_endpoint(
     - **is_read**: Если передано `True`, уведомление будет отмечено как прочитанное.
     - **is_hidden**: Если передано `True`, уведомление будет скрыто.
     """
-    if not user:
+    if not group:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
-    status = await update_notification_status(db, user.id, notification_id, is_read, is_hidden)
+    status = await update_notification_status(db, group.id, notification_id, is_read, is_hidden)
     if not status:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Notification not found")
     return status

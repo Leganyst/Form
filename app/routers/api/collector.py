@@ -3,14 +3,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.crud.collector import (
     create_collector,
-    get_collectors_by_user,
+    get_collectors_by_group,
     update_collector,
     delete_collector,
     get_collector_by_id
 )
+from app.models.group import Group
 from app.schemas.collector import CollectorCreate, CollectorRead, CollectorReadWithVkId
-from app.routers.dependencies.auth import get_user_depend
-from app.schemas.user import UserRead
+from app.routers.dependencies.auth import get_group_depend
+from app.schemas.group import GroupRead
 from app.schemas.analytics import CollectorAnalytics
 from app.crud.collector import get_collector_analytics
 
@@ -23,7 +24,7 @@ router = APIRouter()
     status_code=status.HTTP_201_CREATED,
     tags=["collector"],
     summary="Создать нового сборщика",
-    description="Создаёт нового сборщика, связанного с текущим авторизованным пользователем. Доступно только для авторизованных пользователей.",
+    description="Создаёт нового сборщика, связанного с текущей авторизованной группой. Только для авторизованных групп",
     responses={
         201: {
             "description": "Сборщик успешно создан",
@@ -46,26 +47,26 @@ router = APIRouter()
 async def create_collector_endpoint(
     collector_data: CollectorCreate,
     db: AsyncSession = Depends(get_db),
-    user: UserRead = Depends(get_user_depend)
+    group: GroupRead = Depends(get_group_depend)
 ):
     """
-    Создает нового сборщика для авторизованного пользователя.
+    Создает нового сборщика для авторизованной группы.
 
     - **collector_data**: Данные для создания сборщика, такие как название, тип клиента и плагин.
-    - **user**: Авторизованный пользователь, к которому будет привязан сборщик.
+    - **group**: Авторизованная группа, к которой будет привязан сборщик.
     """
-    if not user:
+    if not group:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
-    return await create_collector(db, user.id, collector_data)
+    return await create_collector(db, group.id, collector_data)
 
 
-# Get collectors for the authenticated user
+# Get collectors for the authenticated group
 @router.get(
     "/collectors",
     response_model=list[CollectorRead],
     summary="Получить список сборщиков",
     tags=["collector"],
-    description="Возвращает все сборщики, связанные с текущим авторизованным пользователем.",
+    description="Возвращает все сборщики, связанные с текущей авторизованной группой.",
     responses={
         200: {
             "description": "Список сборщиков пользователя",
@@ -87,16 +88,16 @@ async def create_collector_endpoint(
 )
 async def get_collectors_endpoint(
     db: AsyncSession = Depends(get_db),
-    user: UserRead = Depends(get_user_depend)
+    group: GroupRead = Depends(get_group_depend)
 ):
     """
-    Возвращает список сборщиков, принадлежащих текущему пользователю.
+    Возвращает список сборщиков, принадлежащих текущей группе.
 
-    - **user**: Текущий авторизованный пользователь.
+    - **group**: Текущая авторизованная группа.
     """
-    if not user:
+    if not group:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
-    return await get_collectors_by_user(db, user.id)
+    return await get_collectors_by_group(db, group.id)
 
 
 # Update a collector by ID
@@ -105,7 +106,7 @@ async def get_collectors_endpoint(
     response_model=CollectorRead,
     tags=["collector"],
     summary="Обновить сборщика",
-    description="Обновляет информацию о сборщике по ID. Доступно только для авторизованных пользователей.",
+    description="Обновляет информацию о сборщике по ID. Доступно только автризованных групп .",
     responses={
         200: {
             "description": "Сборщик успешно обновлен",
@@ -137,7 +138,7 @@ async def update_collector_endpoint(
     collector_id: int,
     collector_data: CollectorCreate,
     db: AsyncSession = Depends(get_db),
-    user: UserRead = Depends(get_user_depend)
+    group: GroupRead = Depends(get_group_depend)
 ):
     """
     Обновляет данные сборщика, принадлежащего текущему пользователю.
@@ -145,7 +146,7 @@ async def update_collector_endpoint(
     - **collector_id**: ID сборщика, который требуется обновить.
     - **collector_data**: Новые данные сборщика.
     """
-    if not user:
+    if not group:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
     collector = await update_collector(db, collector_id, collector_data)
     if not collector:
@@ -185,14 +186,14 @@ async def update_collector_endpoint(
 async def delete_collector_endpoint(
     collector_id: int,
     db: AsyncSession = Depends(get_db),
-    user: UserRead = Depends(get_user_depend)
+    group: GroupRead = Depends(get_group_depend)
 ):
     """
-    Удаляет сборщика по его ID для текущего пользователя.
-
+    Удаляет сборщика по его ID для текущей группы.
+ 
     - **collector_id**: ID сборщика, который требуется удалить.
     """
-    if not user:
+    if not group:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
     success = await delete_collector(db, collector_id)
     if not success:
@@ -209,7 +210,7 @@ async def delete_collector_endpoint(
     status_code=status.HTTP_200_OK,
     tags=["collector"]
 )
-async def get_collector(collector_id: int, session: AsyncSession = Depends(get_db)):
+async def get_collector(collector_id: int, session: AsyncSession = Depends(get_db), group: GroupRead = Depends(get_group_depend)):
     """
     Эндпоинт для получения информации о конкретном коллекторе по его идентификатору.
     """
@@ -259,14 +260,14 @@ async def get_collector(collector_id: int, session: AsyncSession = Depends(get_d
 async def get_collector_analytics_endpoint(
     collector_id: int,
     db: AsyncSession = Depends(get_db),
-    user: UserRead = Depends(get_user_depend)
+    group: GroupRead = Depends(get_group_depend)
 ):
     """
     Эндпоинт для получения аналитики по коллектору.
     
     - **collector_id**: ID коллектора, по которому требуется аналитика.
     """
-    if not user:
+    if not group:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
     
     analytics = await get_collector_analytics(db, collector_id)

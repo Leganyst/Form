@@ -2,15 +2,15 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db 
-from app.crud.user import create_user
-from app.schemas.user import UserCreate, UserRead
-from app.routers.dependencies.auth import get_query_params, get_user_depend
+from app.crud.group import create_group
+from app.schemas.group import GroupCreate, GroupRead
+from app.routers.dependencies.auth import get_query_params, get_group_depend
 
 router = APIRouter()
 
 @router.get(
     "/auth",
-    response_model=UserRead,
+    response_model=GroupRead,
     status_code=status.HTTP_200_OK,
     summary="Аутентификация пользователя",
     description=(
@@ -22,7 +22,7 @@ router = APIRouter()
             "description": "Успешная аутентификация",
             "content": {
                 "application/json": {
-                    "example": UserRead.example()
+                    "example": GroupRead.example()
                 }
             }
         },
@@ -52,20 +52,20 @@ router = APIRouter()
         }
     }
 )
-async def auth_user(user: UserRead = Depends(get_user_depend), session: AsyncSession = Depends(get_db),
-                    user_data: dict = Depends(get_query_params)):
+async def auth_group(group: GroupRead = Depends(get_group_depend), session: AsyncSession = Depends(get_db),
+                    group_data: dict = Depends(get_query_params)):
     """
-    Аутентифицирует пользователя на основе предоставленного токена VK.
+    Аутентифицирует группу на основе предоставленного токена VK.
 
-    - **user**: Объект пользователя, полученный из зависимости `get_user_depend`.
+    - **group**: Объект группы, полученный из зависимости `get_group_depend`.
     - **session**: Сессия базы данных.
 
     Если пользователь не найден в базе данных, создается новый пользователь.
     Можно использовать как GetMe ручку, для получения обновленной информации о пользователе.
     """
-    if not user:
-        user = await create_user(session, UserCreate(
-            vk_id=user_data.get("vk_user_id"),
+    if not group:
+        group = await create_group(session, GroupCreate(
+            vk_id=group_data.get("vk_group_id"),
             phone=None
         ))
-    return user
+    return group

@@ -1,13 +1,13 @@
 from pydantic import BaseModel, Field, ConfigDict
 from typing import List
-from .user import UserRead
+from .group import GroupRead
 from .collector import CollectorRead
 from .lead import LeadRead
 from typing import Optional
 from datetime import datetime
 
-class UserWithCollectors(BaseModel):
-    user: UserRead = Field(..., description="Информация о пользователе")
+class GroupWithCollectors(BaseModel):
+    group: GroupRead = Field(..., description="Информация о пользователе")
     collectors: List[CollectorRead] = Field(..., description="Список сборщиков, связанных с пользователем")
 
     model_config = ConfigDict(from_attributes=True)
@@ -15,7 +15,7 @@ class UserWithCollectors(BaseModel):
     @classmethod
     def example(cls):
         return cls(
-            user=UserRead.example(),
+            group=GroupRead.example(),
             collectors=[CollectorRead.example()]
         )
 

@@ -8,25 +8,25 @@ from app.schemas.collector import CollectorCreate, CollectorRead, CollectorReadW
 from app.schemas.analytics import CollectorAnalytics
 from app.models.collector import Collector
 from app.models.lead import Lead
-from app.models.user import User
+from app.models.group import Group
 from typing import Optional, List
 from sqlalchemy import func
 
 # Создание нового коллектора
-async def create_collector(db: AsyncSession, user_id: int, collector_data: CollectorCreate) -> CollectorRead:
+async def create_collector(db: AsyncSession, group_id: int, collector_data: CollectorCreate) -> CollectorRead:
     collector = Collector(
         name=collector_data.name,
         transcription=collector_data.transcription,
         client_path_type=collector_data.client_path_type.value.upper(),
         plugin=collector_data.plugin.value.upper() if collector_data.plugin else None,
-        user_id=user_id,
+        group_id=group_id,
         description=collector_data.description,
         count_leads=collector_data.count_leads
     )
     db.add(collector)
-    user = await db.execute(select(User).where(User.id == user_id))
-    user = user.scalar_one_or_none()
-    user.collector_count += 1
+    group = await db.execute(select(Group).where(Group.id == group_id))
+    group = group.scalar_one_or_none()
+    group.collector_count += 1
     
     await db.commit()
     await db.refresh(collector)
@@ -49,11 +49,11 @@ async def create_collector(db: AsyncSession, user_id: int, collector_data: Colle
 
 
 # Получение всех коллекторов по ID пользователя
-async def get_collectors_by_user(db: AsyncSession, user_id: int) -> List[CollectorRead]:
+async def get_collectors_by_group(db: AsyncSession, group_id: int) -> List[CollectorRead]:
     result = await db.execute(
         select(Collector)
-        .options(selectinload(Collector.user), selectinload(Collector.collector_leads))
-        .filter(Collector.user_id == user_id)
+        .options(selectinload(Collector.group), selectinload(Collector.collector_leads))
+        .filter(Collector.group_id == group_id)
     )
     collectors = result.scalars().all()
 
@@ -124,9 +124,9 @@ async def update_collector(
 async def delete_collector(db: AsyncSession, collector_id: int) -> bool:
     result = await db.execute(delete(Collector).where(Collector.id == collector_id))
     
-    user = await db.execute(select(User).where(User.id == collector_id))
-    user = user.scalar_one_or_none()
-    user.collector_count -= 1
+    group = await db.execute(select(Group).where(Group.id == collector_id))
+    group = group.scalar_one_or_none()
+    group.collector_count -= 1
     await db.commit()
     return result.rowcount > 0
 
@@ -135,16 +135,16 @@ async def delete_collector(db: AsyncSession, collector_id: int) -> bool:
 async def get_collector_by_id(session: AsyncSession, collector_id: int) -> Optional[CollectorReadWithVkId]:
     result = await session.execute(
         select(Collector)
-        .options(selectinload(Collector.user), selectinload(Collector.collector_leads))
+        .options(selectinload(Collector.group), selectinload(Collector.collector_leads))
         .filter(Collector.id == collector_id)
     )
     result_collector = result.scalar_one_or_none()
     
-    user_vk_id = await session.execute(
-        select(User.vk_id)
-        .where(User.id == result_collector.user_id)
+    group_vk_id = await session.execute(
+        select(Group.vk_id)
+        .where(Group.id == result_collector.group_id)
     )
-    user_vk_id = user_vk_id.scalar_one_or_none()
+    group_vk_id = group_vk_id.scalar_one_or_none()
 
     if result_collector:
         collector_dict = {
@@ -159,7 +159,7 @@ async def get_collector_by_id(session: AsyncSession, collector_id: int) -> Optio
             "first_bonus": result_collector.first_bonus,
             "second_bonus": result_collector.second_bonus,
             "third_bonus": result_collector.third_bonus,
-            "vk_id": user_vk_id
+            "vk_id": group_vk_id
         }
         return CollectorReadWithVkId(**collector_dict)
     return None

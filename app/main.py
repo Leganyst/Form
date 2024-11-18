@@ -4,14 +4,12 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.docs import get_swagger_ui_html
 from app.core.database import engine, Base
-from app.models import combined, user, lead, collector, notification, user_notification_status
-from app.routers.api.user import router as user_router
+from app.models import combined, group, group_notification_status, lead, collector, notification
+from app.routers.api.group import router as group_router
 from app.routers.api.auth import router as auth_router
 from app.routers.api.collector import router as collector_router
 from app.routers.api.notification import router as notification_router
 from app.routers.api.lead import router as lead_router
-
-
 
 
 @asynccontextmanager
@@ -58,7 +56,7 @@ async def custom_swagger_ui_html():
         swagger_css_url="https://cdn.jsdelivr.net/gh/Itz-fork/Fastapi-Swagger-UI-Dark/assets/swagger_ui_dark.min.css"
     )
 
-app.include_router(user_router, prefix="/api")
+app.include_router(group_router, prefix="/api")
 app.include_router(auth_router, prefix="/api")
 app.include_router(collector_router, prefix="/api")
 app.include_router(notification_router, prefix="/api")

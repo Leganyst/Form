@@ -11,4 +11,4 @@ class Notification(Base):
     link = Column(String, nullable=True)
     notification_type = Column(String, nullable=False)  # "заданное" или "новостное"
 
-    user_statuses = relationship("UserNotificationStatus", back_populates="notification")
+    group_statuses = relationship("GroupNotificationStatus", back_populates="notification")
