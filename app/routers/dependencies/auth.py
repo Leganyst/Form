@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi import Depends, HTTPException, status
 from app.core.config import settings
-from app.crud.user import get_user_by_vk_id
+from app.crud.group import get_group_by_vk_id
 from app.core.database import get_db
 
 from hashlib import sha256
@@ -73,7 +73,7 @@ async def get_query_params(token: str = Depends(get_token)) -> dict:
     return query_params
 
 
-async def verification_user(token_is_valid: bool = Depends(check_valid_token), token: str = Depends(get_token), session: AsyncSession = Depends(get_db)):
+async def verification_group(token_is_valid: bool = Depends(check_valid_token), token: str = Depends(get_token), session: AsyncSession = Depends(get_db)):
     """
     Зависимость для проверки токена и получения пользователя
     """
@@ -81,20 +81,20 @@ async def verification_user(token_is_valid: bool = Depends(check_valid_token), t
         HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
         
     query_params = await get_query_params(token)
-    user_id = query_params.get("vk_user_id")
+    group_id = query_params.get("vk_group_id")
     
-    if not user_id:
+    if not group_id:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid token")
     
-    user = await get_user_by_vk_id(session, user_id) 
-    if not user:
+    group = await get_group_by_vk_id(session, group_id) 
+    if not group:
         return None
 
-    return user
+    return group
 
 
-async def get_user_depend(user: dict = Depends(verification_user)):
+async def get_group_depend(group: dict = Depends(verification_group)):
     """
     Зависимость для получения пользователя
     """
-    return user
+    return group

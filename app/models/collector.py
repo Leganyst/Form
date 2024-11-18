@@ -21,7 +21,7 @@ class Collector(Base):
     name = Column(String, default="сборщик", nullable=False)
     transcription = Column(String, nullable=True)
     description = Column(String, nullable=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    group_id = Column(Integer, ForeignKey("groups.id"), nullable=False)
     client_path_type = Column(Enum(ClientPathType), nullable=False)
     client_path = Column(Text, nullable=True)
     plugin = Column(Enum(PluginType), nullable=True)
@@ -31,5 +31,5 @@ class Collector(Base):
     second_bonus = Column(String(50), nullable=True)
     third_bonus = Column(String(50), nullable=True)
     
-    user = relationship("User", back_populates="collectors")
+    group = relationship("Group", back_populates="collectors")
     collector_leads = relationship("CollectorLead", back_populates="collector")

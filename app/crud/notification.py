@@ -2,9 +2,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import update
 from app.models.notification import Notification
-from app.models.user_notification_status import UserNotificationStatus
+from app.models.group_notification_status import GroupNotificationStatus
 from app.schemas.notification import NotificationCreate, NotificationRead
-from app.schemas.user_notification_status import UserNotificationStatusRead
+from app.schemas.group_notification_status import GroupNotificationStatusRead
 
 # Create notification
 async def create_notification(db: AsyncSession, notification_data: NotificationCreate) -> NotificationRead:
@@ -19,20 +19,20 @@ async def create_notification(db: AsyncSession, notification_data: NotificationC
     await db.refresh(notification)
     return NotificationRead.model_validate(notification)
 
-# Get notifications for a user
-async def get_notifications_for_user(db: AsyncSession, user_id: int) -> list[NotificationRead]:
+# Get notifications for a group
+async def get_notifications_for_group(db: AsyncSession, group_id: int) -> list[NotificationRead]:
     result = await db.execute(
         select(Notification)
-        .join(UserNotificationStatus)
-        .filter(UserNotificationStatus.user_id == user_id)
+        .join(GroupNotificationStatus)
+        .filter(GroupNotificationStatus.group == group_id)
     )
     notifications = result.scalars().all()
     return [NotificationRead.model_validate(n) for n in notifications]
 
-# Update notification status for user (mark as read or hidden)
+# Update notification status for group (mark as read or hidden)
 async def update_notification_status(
-    db: AsyncSession, user_id: int, notification_id: int, is_read: bool = None, is_hidden: bool = None
-) -> UserNotificationStatusRead:
+    db: AsyncSession, group_id: int, notification_id: int, is_read: bool = None, is_hidden: bool = None
+) -> GroupNotificationStatusRead:
     values = {}
     
     notification_type = await db.execute(
@@ -48,11 +48,11 @@ async def update_notification_status(
     
 
     result = await db.execute(
-        update(UserNotificationStatus)
-        .where(UserNotificationStatus.user_id == user_id, UserNotificationStatus.notification_id == notification_id)
+        update(GroupNotificationStatus)
+        .where(GroupNotificationStatus.group == group_id, GroupNotificationStatus.notification_id == notification_id)
         .values(**values)
-        .returning(UserNotificationStatus)
+        .returning(GroupNotificationStatus)
     )
     status = result.scalar_one_or_none()
     await db.commit()
-    return UserNotificationStatusRead.model_validate(status) if status else None
+    return GroupNotificationStatusRead.model_validate(status) if status else None

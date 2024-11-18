@@ -10,7 +10,7 @@ from app.crud.lead import (
     get_collector_analytics,
     update_lead
 )
-from app.routers.dependencies.auth import get_user_depend
+from app.routers.dependencies.auth import get_group_depend
 from app.schemas.analytics import CollectorAnalytics
 from app.schemas.combined import CollectorLeadRead
 from app.schemas.lead import LeadCreate, LeadRead
@@ -18,7 +18,7 @@ from app.models.combined import CollectorLead
 from app.models.lead import Lead
 from typing import Optional, List
 
-from app.schemas.user import UserRead
+from app.schemas.group import GroupRead
 
 router = APIRouter()
 
@@ -68,7 +68,7 @@ async def get_collector_analytics_endpoint(
     collector_id: int,
     period: str,
     db: AsyncSession = Depends(get_db),
-    user: UserRead = Depends(get_user_depend)
+    user: GroupRead = Depends(get_group_depend)
 ):
     """
     Получает аналитику для указанного collector_id за период.
