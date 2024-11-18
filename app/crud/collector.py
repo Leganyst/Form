@@ -41,6 +41,7 @@ async def create_collector(db: AsyncSession, group_id: int, collector_data: Coll
         "client_path": collector.client_path,
         "plugin": collector.plugin,
         "count_leads": collector.count_leads,
+        "request_phone_numbers": collector.request_phone_numbers,
         "first_bonus": collector.first_bonus,
         "second_bonus": collector.second_bonus,
         "third_bonus": collector.third_bonus
@@ -67,6 +68,7 @@ async def get_collectors_by_group(db: AsyncSession, group_id: int) -> List[Colle
             "client_path": c.client_path,
             "plugin": c.plugin,
             "count_leads": c.count_leads,
+            "request_phone_numbers": c.request_phone_numbers,
             "first_bonus": c.first_bonus,
             "second_bonus": c.second_bonus,
             "third_bonus": c.third_bonus
@@ -74,10 +76,10 @@ async def get_collectors_by_group(db: AsyncSession, group_id: int) -> List[Colle
     ]
 
 
-# Обновление коллектора по его ID
 async def update_collector(
     db: AsyncSession, collector_id: int, collector_data: CollectorCreate
 ) -> Optional[CollectorRead]:
+    # Выполняем обновление и возвращаем только ID
     result = await db.execute(
         update(Collector)
         .where(Collector.id == collector_id)
@@ -94,31 +96,33 @@ async def update_collector(
             second_bonus=collector_data.second_bonus,
             third_bonus=collector_data.third_bonus
         )
-        .returning(Collector)
+        .returning(Collector.id)
     )
-    await db.commit()
-    collector: Collector = result.scalar_one_or_none()
+    collector_id = result.scalar_one_or_none()
 
-    if collector:
-        # Явно обновляем объект, чтобы загрузить все его атрибуты
-        await db.refresh(collector)
-        collector_dict = {
-            "id": collector.id,
-            "name": collector.name,
-            "description": collector.description,
-            "transcription": collector.transcription,
-            "client_path_type": collector.client_path_type,
-            "client_path": collector.client_path,
-            "plugin": collector.plugin,
-            "count_leads": collector.count_leads,
-            "request_phone_numbers": collector.request_phone_numbers,
-            "first_bonus": collector.first_bonus,
-            "second_bonus": collector.second_bonus,
-            "third_bonus": collector.third_bonus
-        }
-        return CollectorRead(**collector_dict)
+    if collector_id:
+        # Выполняем запрос для полной загрузки объекта коллектора
+        collector = await db.get(Collector, collector_id)
+
+        if collector:
+            collector_dict = {
+                "id": collector.id,
+                "name": collector.name,
+                "description": collector.description,
+                "transcription": collector.transcription,
+                "client_path_type": collector.client_path_type,
+                "client_path": collector.client_path,
+                "plugin": collector.plugin,
+                "count_leads": collector.count_leads,
+                "request_phone_numbers": collector.request_phone_numbers,
+                "first_bonus": collector.first_bonus,
+                "second_bonus": collector.second_bonus,
+                "third_bonus": collector.third_bonus
+            }
+            return CollectorRead(**collector_dict)
+
+    await db.rollback()
     return None
-
 
 # Удаление коллектора по его ID
 async def delete_collector(db: AsyncSession, collector_id: int) -> bool:
@@ -159,6 +163,7 @@ async def get_collector_by_id(session: AsyncSession, collector_id: int) -> Optio
             "client_path": result_collector.client_path,
             "plugin": result_collector.plugin,
             "count_leads": result_collector.count_leads,
+            "request_phone_numbers": result_collector.request_phone_numbers,
             "first_bonus": result_collector.first_bonus,
             "second_bonus": result_collector.second_bonus,
             "third_bonus": result_collector.third_bonus,
