@@ -96,8 +96,8 @@ async def update_collector(
         )
         .returning(Collector)
     )
-    collector: Collector = result.scalar_one_or_none()
     await db.commit()
+    collector: Collector = result.scalar_one_or_none()
 
     if collector:
         # Явно обновляем объект, чтобы загрузить все его атрибуты
@@ -139,6 +139,9 @@ async def get_collector_by_id(session: AsyncSession, collector_id: int) -> Optio
         .filter(Collector.id == collector_id)
     )
     result_collector = result.scalar_one_or_none()
+    
+    if not result_collector:
+        return None
     
     group_vk_id = await session.execute(
         select(Group.vk_id)
