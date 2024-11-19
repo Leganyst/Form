@@ -127,6 +127,7 @@ async def update_collector(
     await db.rollback()
     return None
 
+
 # Удаление коллектора по его ID
 async def delete_collector(db: AsyncSession, collector_id: int) -> bool:
     result = await db.execute(delete(Collector).where(Collector.id == collector_id))

@@ -80,6 +80,16 @@ async def submit_lead_request(db: AsyncSession, vk_id: str, collector_id: int) -
         # Обновляем запись
         collector_lead.request_form = True
         collector_lead.datetime_request = datetime.utcnow()
+        
+        collector = await db.scalar(
+            select(Collector)
+            .where(
+                Collector.id == collector_id
+            )
+        )
+        collector.count_leads += 1
+
+        
         await db.commit()
         await db.refresh(collector_lead)
         return collector_lead
@@ -249,5 +259,12 @@ async def delete_lead(collector_id: int, vk_id: str, db: AsyncSession) -> bool:
             CollectorLead.lead_id == lead  # Используем lead_id, найденный ранее
         )
     )
+    
+    collector = await db.scalar(
+        select(Collector)
+        .where(Collector.id == collector_id)
+    )
+    collector.count_leads -= 1
+    
     await db.commit()
     return delete_result.rowcount > 0
