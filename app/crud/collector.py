@@ -101,7 +101,8 @@ async def update_collector(
         .returning(Collector.id)
     )
     collector_id = result.scalar_one_or_none()
-
+    await db.commit()
+        
     if collector_id:
         # Выполняем запрос для полной загрузки объекта коллектора
         collector = await db.get(Collector, collector_id)
@@ -122,7 +123,7 @@ async def update_collector(
                 "third_bonus": collector.third_bonus
             }
             return CollectorRead(**collector_dict)
-
+        await db.commit()   
     await db.rollback()
     return None
 
