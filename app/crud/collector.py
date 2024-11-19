@@ -20,6 +20,7 @@ async def create_collector(db: AsyncSession, group_id: int, collector_data: Coll
         name=collector_data.name,
         transcription=collector_data.transcription,
         client_path_type=collector_data.client_path_type.value.upper(),
+        client_path=collector_data.client_path,
         plugin=collector_data.plugin.value.upper() if collector_data.plugin else None,
         group_id=group_id,
         description=collector_data.description,
@@ -32,7 +33,6 @@ async def create_collector(db: AsyncSession, group_id: int, collector_data: Coll
     
     await db.commit()
     await db.refresh(collector)
-
 
     collector_dict = {
         "id": collector.id,
@@ -140,12 +140,20 @@ async def delete_collector(db: AsyncSession, collector_id: int) -> bool:
 
 
 # Получение коллектора по его ID
-async def get_collector_by_id(session: AsyncSession, collector_id: int, group: GroupRead) -> Optional[CollectorReadWithVkId]:
-    result = await session.execute(
-        select(Collector)
-        .options(selectinload(Collector.group), selectinload(Collector.collector_leads))
-        .filter(Collector.id == collector_id, Collector.group_id == group.id)
-    )
+async def get_collector_by_id(session: AsyncSession, collector_id: int, group: GroupRead = None) -> Optional[CollectorReadWithVkId]:
+    
+    if group:
+        result = await session.execute(
+            select(Collector)
+            .options(selectinload(Collector.group), selectinload(Collector.collector_leads))
+            .filter(Collector.id == collector_id, Collector.group_id == group.id)
+        )
+    else:
+        result = await session.execute(
+            select(Collector)
+            .options(selectinload(Collector.group), selectinload(Collector.collector_leads))
+            .filter(Collector.id == collector_id)
+        )
     result_collector = result.scalar_one_or_none()
     
     if not result_collector:

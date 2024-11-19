@@ -6,7 +6,11 @@ class Settings(BaseSettings):
     postgres_password: str
     postgres_db: str
     application_secret_key: str
-
+    telegram_bot_token: str
+    admin_id_first: str
+    admin_id_second: str
+    admin_id_third: str
+    
     class Config:
         env_file = ".env"
         
